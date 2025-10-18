@@ -3,96 +3,95 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>User Task - Admin Panel</title>
-
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
+<title>User Tasks - Admin Panel</title>
 <style>
-  body { font-family: Arial, sans-serif; padding:20px; background:#f3f4f6; }
-  header { text-align:center; font-size:24px; font-weight:bold; color:#3b82f6; margin-bottom:20px; }
-  .card { background:white; padding:15px; margin-bottom:15px; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.1); }
-  .card img { width:120px; margin-right:10px; border-radius:5px; }
-  .btn { padding:8px 12px; margin-right:5px; border:none; border-radius:5px; cursor:pointer; }
-  .btn-submit { background:#10b981; color:white; }
-  .btn-reject { background:#ef4444; color:white; }
+  body { font-family: Arial, sans-serif; background: #f0f9ff; padding: 20px; }
+  h1 { text-align: center; color: #3b82f6; }
+  .task-card { background: #fff; padding: 15px; margin: 15px auto; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); max-width: 800px; }
+  .task-card img { max-width: 100%; margin: 10px 0; border-radius: 5px; }
+  .task-info { margin-bottom: 10px; }
+  .btn { padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; margin-right: 5px; font-weight: bold; }
+  .approve { background: #10b981; color: white; }
+  .reject { background: #ef4444; color: white; }
+  .date { font-size: 12px; color: #6b7280; }
 </style>
 </head>
 <body>
 
-<header>✅ User Task</header>
+<h1>📝 User Tasks</h1>
+<div id="taskContainer"></div>
 
-<div id="taskContainer">
-  <!-- Firebase দিয়ে Task Requests লোড হবে -->
-</div>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js"></script>
 
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyBEbzvJ5asGNPp85_Uyvk1N_TCjIBfECXY",
-  authDomain: "studentbestincome.firebaseapp.com",
-  databaseURL: "https://studentbestincome-default-rtdb.firebaseio.com",
-  projectId: "studentbestincome",
-  storageBucket: "studentbestincome.appspot.com",
-  messagingSenderId: "261636758539",
-  appId: "1:261636758539:web:faea7afabe319a53117b0e",
-  measurementId: "G-6L77EJ7MJF"
-};
+  const firebaseConfig = {
+    apiKey: "AIzaSyBEbzvJ5asGNPp85_Uyvk1N_TCjIBfECXY",
+    authDomain: "studentbestincome.firebaseapp.com",
+    databaseURL: "https://studentbestincome-default-rtdb.firebaseio.com",
+    projectId: "studentbestincome",
+    storageBucket: "studentbestincome.firebasestorage.app",
+    messagingSenderId: "261636758539",
+    appId: "1:261636758539:web:faea7afabe319a53117b0e",
+    measurementId: "G-6L77EJ7MJF"
+  };
 
-firebase.initializeApp(firebaseConfig);
+  // Initialize Firebase
+  const app = firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
 
-// Admin Login
-const adminEmail = "admin@example.com";
-const adminPass = "Dark";
+  const taskContainer = document.getElementById("taskContainer");
 
-firebase.auth().signInWithEmailAndPassword(adminEmail, adminPass)
-  .then(() => {
-    console.log("Admin logged in!");
-    loadTasks();
-  })
-  .catch(err => console.error("Login Error:", err.message));
+  // Fetch tasks in real-time
+  db.ref('tasks').on('value', snapshot => {
+    taskContainer.innerHTML = '';
+    snapshot.forEach(taskSnap => {
+      const task = taskSnap.val();
+      const taskId = taskSnap.key;
 
-// Load User Tasks
-function loadTasks() {
-  const dbRef = firebase.database().ref('tasks'); // Task requests path
-  dbRef.on('value', snapshot => {
-    const tasks = snapshot.val();
-    const container = document.getElementById('taskContainer');
-    container.innerHTML = '';
-
-    for (let taskId in tasks) {
-      const task = tasks[taskId];
       const card = document.createElement('div');
-      card.className = 'card';
-      card.innerHTML = `
-        <p><strong>User:</strong> ${task.userName || '-'}</p>
-        <p><strong>Task:</strong> ${task.taskName || '-'}</p>
-        <p><strong>Contact:</strong> ${task.contact || '-'}</p>
-        <div style="display:flex;">
-          <div>
-            <p>Screenshot 1:</p>
-            <img src="${task.screenshot1 || '#'}" alt="Screenshot1">
-          </div>
-          <div>
-            <p>Screenshot 2:</p>
-            <img src="${task.screenshot2 || '#'}" alt="Screenshot2">
-          </div>
-        </div>
-        <button class="btn btn-submit" onclick="updateTask('${taskId}', 'Submitted')">Submit</button>
-        <button class="btn btn-reject" onclick="updateTask('${taskId}', 'Rejected')">Reject</button>
-      `;
-      container.appendChild(card);
-    }
-  });
-}
+      card.className = 'task-card';
 
-// Update Task Status
-function updateTask(taskId, status) {
-  firebase.database().ref('tasks/' + taskId).update({ status: status })
-    .then(() => alert('Task ' + status + '!'))
-    .catch(err => alert('Error: ' + err.message));
-}
+      card.innerHTML = `
+        <div class="task-info"><strong>Username:</strong> ${task.username}</div>
+        <div class="task-info"><strong>Task:</strong> ${task.taskName}</div>
+        <div class="task-info"><strong>Number/Email:</strong> ${task.userContact}</div>
+        <div class="task-info"><strong>Submitted At:</strong> <span class="date">${task.timestamp}</span></div>
+        <div>
+          <strong>Screenshot Before:</strong><br>
+          <img src="${task.screenshotBefore}" alt="Before">
+        </div>
+        <div>
+          <strong>Screenshot After:</strong><br>
+          <img src="${task.screenshotAfter}" alt="After">
+        </div>
+        <div style="margin-top:10px;">
+          <button class="btn approve" onclick="updateTaskStatus('${taskId}', 'Approved', ${task.reward}, '${task.userId}')">Approve</button>
+          <button class="btn reject" onclick="updateTaskStatus('${taskId}', 'Rejected')">Reject</button>
+        </div>
+        <div class="task-info"><strong>Status:</strong> ${task.status || 'Pending'}</div>
+      `;
+      taskContainer.appendChild(card);
+    });
+  });
+
+  function updateTaskStatus(taskId, status, reward = 0, userId = null) {
+    const taskRef = db.ref('tasks/' + taskId);
+
+    if(status === 'Approved' && userId) {
+      const userRef = db.ref('users/' + userId);
+      userRef.once('value').then(userSnap => {
+        const user = userSnap.val();
+        let newBalance = (user.balance || 0) + reward;
+        userRef.update({ balance: newBalance });
+      });
+    }
+
+    taskRef.update({ status: status })
+      .then(() => alert('Task ' + status))
+      .catch(err => alert('Error: ' + err));
+  }
 </script>
 
 </body>
