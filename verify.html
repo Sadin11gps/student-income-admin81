@@ -3,88 +3,80 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Verify Requests - Admin Panel</title>
+<title>Admin - Verify Requests</title>
 <style>
-  body { font-family: Arial, sans-serif; background: #f3f4f6; padding: 20px; }
-  h1 { color: #3b82f6; text-align: center; margin-bottom: 20px; }
-  table { width: 100%; border-collapse: collapse; }
-  th, td { padding: 10px; border: 1px solid #ccc; text-align: center; }
-  th { background: #10b981; color: white; }
-  button { padding: 6px 12px; border: none; border-radius: 5px; cursor: pointer; }
-  .verify { background: #059669; color: white; }
-  .reject { background: #ef4444; color: white; }
+body { font-family: Arial; background:#f0f9ff; padding:20px;}
+h2 { color:#3b82f6; }
+.request-card { background:#e0f2fe; padding:15px; margin:10px 0; border-radius:10px;}
+button { padding:5px 10px; margin:5px; cursor:pointer; border:none; border-radius:5px;}
+.verify-btn { background:#10b981; color:white;}
+.reject-btn { background:#ef4444; color:white;}
+img { max-width:200px; display:block; margin-top:5px; }
 </style>
 </head>
 <body>
 
-<h1>✅ Verify Requests</h1>
-
-<table id="verifyTable">
-  <thead>
-    <tr>
-      <th>User ID</th>
-      <th>Name</th>
-      <th>TxnID</th>
-      <th>Date/Time</th>
-      <th>Action</th>
-    </tr>
-  </thead>
-  <tbody>
-    <!-- Firebase Data Will Appear Here -->
-  </tbody>
-</table>
+<h2>📝 Verify Requests</h2>
+<div id="requestsContainer">Loading...</div>
 
 <!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
 <script>
-  // Firebase Config
-  const firebaseConfig = {
-    apiKey: "AIzaSyBEbzvJ5asGNPp85_Uyvk1N_TCjIBfECXY",
-    authDomain: "studentbestincome.firebaseapp.com",
-    databaseURL: "https://studentbestincome-default-rtdb.firebaseio.com",
-    projectId: "studentbestincome",
-    storageBucket: "studentbestincome.firebasestorage.app",
-    messagingSenderId: "261636758539",
-    appId: "1:261636758539:web:faea7afabe319a53117b0e",
-    measurementId: "G-6L77EJ7MJF"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyBEbzvJ5asGNPp85_Uyvk1N_TCjIBfECXY",
+  authDomain: "studentbestincome.firebaseapp.com",
+  databaseURL: "https://studentbestincome-default-rtdb.firebaseio.com",
+  projectId: "studentbestincome",
+  storageBucket: "studentbestincome.firebasestorage.app",
+  messagingSenderId: "261636758539",
+  appId: "1:261636758539:web:faea7afabe319a53117b0e",
+  measurementId: "G-6L77EJ7MJF"
+};
 
-  const app = firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.database();
 
-  const tableBody = document.querySelector("#verifyTable tbody");
+const requestsContainer = document.getElementById('requestsContainer');
 
-  db.ref('verify').on('value', snapshot => {
-    tableBody.innerHTML = "";
-    snapshot.forEach(child => {
-      const data = child.val();
-      const tr = document.createElement('tr');
+// Load all verify requests in real-time
+db.ref('admin/verify_requests').on('value', snapshot=>{
+    requestsContainer.innerHTML = '';
+    if(snapshot.exists()){
+        const data = snapshot.val();
+        Object.keys(data).forEach(uid=>{
+            const req = data[uid];
+            const card = document.createElement('div');
+            card.className = 'request-card';
+            card.innerHTML = `
+                <strong>User ID:</strong> ${req.userId}<br>
+                <strong>Number/Email:</strong> ${req.userNumber}<br>
+                <strong>Txn ID:</strong> ${req.txnId}<br>
+                <img src="${req.screenshotURL}" alt="Screenshot">
+                <button class="verify-btn" onclick="approve('${uid}')">Verified</button>
+                <button class="reject-btn" onclick="reject('${uid}')">Rejected</button>
+            `;
+            requestsContainer.appendChild(card);
+        });
+    } else {
+        requestsContainer.innerText = 'No verify requests found';
+    }
+});
 
-      tr.innerHTML = `
-        <td>${data.userId}</td>
-        <td>${data.name}</td>
-        <td>${data.txnId}</td>
-        <td>${data.date}</td>
-        <td>
-          <button class="verify">Verified</button>
-          <button class="reject">Rejected</button>
-        </td>
-      `;
+// Approve request
+function approve(uid){
+    db.ref('users/' + uid + '/verify_requests').update({status:'verified'});
+    db.ref('admin/verify_requests/' + uid).remove();
+}
 
-      tr.querySelector('.verify').onclick = () => {
-        db.ref('verify/' + child.key).update({ status: 'Verified' });
-        db.ref('users/' + data.userId).update({ verified: true });
-      };
-
-      tr.querySelector('.reject').onclick = () => {
-        db.ref('verify/' + child.key).update({ status: 'Rejected' });
-      };
-
-      tableBody.appendChild(tr);
-    });
-  });
+// Reject request
+function reject(uid){
+    db.ref('users/' + uid + '/verify_requests').update({status:'rejected'});
+    db.ref('admin/verify_requests/' + uid).remove();
+}
 </script>
 
 </body>

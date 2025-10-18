@@ -52,7 +52,6 @@
   // Admin Login Example (Later replace with proper auth UI)
   const adminEmail = "admin@example.com";   // Firebase Auth এ যে Admin Email আছে
   const adminPass = "Dark";                 // Firebase Auth password
-
   firebase.auth().signInWithEmailAndPassword(adminEmail, adminPass)
     .then(() => {
       console.log("Admin logged in!");
