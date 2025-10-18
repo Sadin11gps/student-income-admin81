@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel - Student Best Income</title>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<style>
+  body { font-family: Arial, sans-serif; margin:0; padding:0; background:#f3f4f6; }
+  header { background:#3b82f6; color:white; padding:15px; text-align:center; font-size:24px; font-weight:bold; }
+  nav { display:flex; justify-content:center; gap:15px; flex-wrap:wrap; padding:15px; }
+  nav a { display:flex; align-items:center; justify-content:center; width:70px; height:70px; border-radius:50%; color:white; text-decoration:none; font-weight:bold; font-size:16px; }
+  nav a.user { background:#10b981; }    /* User List */
+  nav a.task { background:#3b82f6; }    /* User Task */
+  nav a.withdraw { background:#f59e0b; }/* Withdraw */
+  nav a.verify { background:#ef4444; }  /* Verify */
+  nav a.broadcast { background:#8b5cf6;}/* Broadcast */
+</style>
+</head>
+<body>
+
+<header>🌟 Admin Panel 🌟</header>
+
+<nav>
+  <a href="user-list.html" class="user">👤<br>User</a>
+  <a href="user-task.html" class="task">✅<br>Task</a>
+  <a href="withdraw.html" class="withdraw">💰<br>Withdraw</a>
+  <a href="verify.html" class="verify">✔️<br>Verify</a>
+  <a href="broadcast.html" class="broadcast">📢<br>Broadcast</a>
+</nav>
+
+<!-- Firebase Config -->
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBEbzvJ5asGNPp85_Uyvk1N_TCjIBfECXY",
+    authDomain: "studentbestincome.firebaseapp.com",
+    databaseURL: "https://studentbestincome-default-rtdb.firebaseio.com",
+    projectId: "studentbestincome",
+    storageBucket: "studentbestincome.appspot.com",
+    messagingSenderId: "261636758539",
+    appId: "1:261636758539:web:faea7afabe319a53117b0e",
+    measurementId: "G-6L77EJ7MJF"
+  };
+
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+
+  // Admin Login Example (Later replace with proper auth UI)
+  const adminEmail = "admin@example.com";   // Firebase Auth এ যে Admin Email আছে
+  const adminPass = "Dark";                 // Firebase Auth password
+
+  firebase.auth().signInWithEmailAndPassword(adminEmail, adminPass)
+    .then(() => {
+      console.log("Admin logged in!");
+    })
+    .catch((error) => {
+      console.error("Login Error:", error.message);
+    });
+</script>
+
+</body>
+</html>

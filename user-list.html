@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>User List - Admin Panel</title>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<style>
+  body { font-family: Arial, sans-serif; padding:20px; background:#f3f4f6; }
+  header { text-align:center; font-size:24px; font-weight:bold; color:#3b82f6; margin-bottom:20px; }
+  .card { background:white; padding:15px; margin-bottom:15px; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.1); display:flex; justify-content:space-between; align-items:center; }
+  .btn { padding:8px 12px; border:none; border-radius:5px; cursor:pointer; }
+  .btn-update { background:#10b981; color:white; }
+  .balance-input { width:80px; padding:5px; margin-right:5px; border-radius:5px; border:1px solid #ccc; }
+</style>
+</head>
+<body>
+
+<header>👤 User List</header>
+
+<div id="userContainer">
+  <!-- Firebase দিয়ে এখানে ইউজার লিস্ট লোড হবে -->
+</div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBEbzvJ5asGNPp85_Uyvk1N_TCjIBfECXY",
+  authDomain: "studentbestincome.firebaseapp.com",
+  databaseURL: "https://studentbestincome-default-rtdb.firebaseio.com",
+  projectId: "studentbestincome",
+  storageBucket: "studentbestincome.appspot.com",
+  messagingSenderId: "261636758539",
+  appId: "1:261636758539:web:faea7afabe319a53117b0e",
+  measurementId: "G-6L77EJ7MJF"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+// Admin Login
+const adminEmail = "admin@example.com";
+const adminPass = "Dark";
+
+firebase.auth().signInWithEmailAndPassword(adminEmail, adminPass)
+  .then(() => {
+    console.log("Admin logged in!");
+    loadUsers();
+  })
+  .catch(err => console.error("Login Error:", err.message));
+
+// Load Users
+function loadUsers() {
+  const dbRef = firebase.database().ref('users'); // Firebase Realtime Database এর path
+  dbRef.on('value', (snapshot) => {
+    const users = snapshot.val();
+    const container = document.getElementById('userContainer');
+    container.innerHTML = '';
+
+    for (let uid in users) {
+      const user = users[uid];
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <div>
+          <p><strong>UserID:</strong> ${uid}</p>
+          <p><strong>Name:</strong> ${user.name || '-'}</p>
+          <p><strong>Balance:</strong> <input type="number" class="balance-input" value="${user.balance || 0}">৳</p>
+        </div>
+        <button class="btn btn-update" onclick="updateBalance('${uid}', this)">Update</button>
+      `;
+      container.appendChild(card);
+    }
+  });
+}
+
+// Update Balance
+function updateBalance(uid, btn) {
+  const input = btn.previousElementSibling.querySelector('.balance-input');
+  const newBalance = parseInt(input.value) || 0;
+  firebase.database().ref('users/' + uid).update({ balance: newBalance })
+    .then(() => alert('Balance Updated!'))
+    .catch(err => alert('Error: ' + err.message));
+}
+</script>
+
+</body>
+</html>

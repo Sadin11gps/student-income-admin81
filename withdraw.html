@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Withdraw Requests - Admin Panel</title>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<style>
+  body { font-family: Arial, sans-serif; padding:20px; background:#f3f4f6; }
+  header { text-align:center; font-size:24px; font-weight:bold; color:#3b82f6; margin-bottom:20px; }
+  .card { background:white; padding:15px; margin-bottom:15px; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.1); }
+  .btn { padding:8px 12px; margin-right:5px; border:none; border-radius:5px; cursor:pointer; }
+  .btn-approve { background:#10b981; color:white; }
+  .btn-reject { background:#ef4444; color:white; }
+</style>
+</head>
+<body>
+
+<header>💰 Withdraw Requests</header>
+
+<div id="withdrawContainer">
+  <!-- Firebase থেকে Withdraw Requests লোড হবে -->
+</div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBEbzvJ5asGNPp85_Uyvk1N_TCjIBfECXY",
+  authDomain: "studentbestincome.firebaseapp.com",
+  databaseURL: "https://studentbestincome-default-rtdb.firebaseio.com",
+  projectId: "studentbestincome",
+  storageBucket: "studentbestincome.appspot.com",
+  messagingSenderId: "261636758539",
+  appId: "1:261636758539:web:faea7afabe319a53117b0e",
+  measurementId: "G-6L77EJ7MJF"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+// Admin Login
+const adminEmail = "admin@example.com";
+const adminPass = "Dark";
+
+firebase.auth().signInWithEmailAndPassword(adminEmail, adminPass)
+  .then(() => {
+    console.log("Admin logged in!");
+    loadWithdrawRequests();
+  })
+  .catch(err => console.error("Login Error:", err.message));
+
+// Load Withdraw Requests
+function loadWithdrawRequests() {
+  const dbRef = firebase.database().ref('withdraw'); // Withdraw Requests path
+  dbRef.on('value', snapshot => {
+    const requests = snapshot.val();
+    const container = document.getElementById('withdrawContainer');
+    container.innerHTML = '';
+
+    for (let reqId in requests) {
+      const req = requests[reqId];
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <p><strong>UserID:</strong> ${req.userId || '-'}</p>
+        <p><strong>Name:</strong> ${req.userName || '-'}</p>
+        <p><strong>Method:</strong> ${req.method || '-'}</p>
+        <p><strong>Number:</strong> ${req.number || '-'}</p>
+        <p><strong>Amount:</strong> ${req.amount || 0}৳</p>
+        <button class="btn btn-approve" onclick="updateWithdraw('${reqId}', 'Approved')">Approve</button>
+        <button class="btn btn-reject" onclick="updateWithdraw('${reqId}', 'Rejected')">Reject</button>
+      `;
+      container.appendChild(card);
+    }
+  });
+}
+
+// Update Withdraw Status
+function updateWithdraw(reqId, status) {
+  firebase.database().ref('withdraw/' + reqId).update({ status: status })
+    .then(() => alert('Withdraw ' + status + '!'))
+    .catch(err => alert('Error: ' + err.message));
+}
+</script>
+
+</body>
+</html>
