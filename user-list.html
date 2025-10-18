@@ -1,92 +1,100 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>User List - Admin Panel</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin - User List</title>
+<script type="module">
+  // Import Firebase SDK
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+  import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBEbzvJ5asGNPp85_Uyvk1N_TCjIBfECXY",
+    authDomain: "studentbestincome.firebaseapp.com",
+    databaseURL: "https://studentbestincome-default-rtdb.firebaseio.com",
+    projectId: "studentbestincome",
+    storageBucket: "studentbestincome.firebasestorage.app",
+    messagingSenderId: "261636758539",
+    appId: "1:261636758539:web:faea7afabe319a53117b0e",
+    measurementId: "G-6L77EJ7MJF"
+  };
 
-<style>
-  body { font-family: Arial, sans-serif; padding:20px; background:#f3f4f6; }
-  header { text-align:center; font-size:24px; font-weight:bold; color:#3b82f6; margin-bottom:20px; }
-  .card { background:white; padding:15px; margin-bottom:15px; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.1); display:flex; justify-content:space-between; align-items:center; }
-  .btn { padding:8px 12px; border:none; border-radius:5px; cursor:pointer; }
-  .btn-update { background:#10b981; color:white; }
-  .balance-input { width:80px; padding:5px; margin-right:5px; border-radius:5px; border:1px solid #ccc; }
-</style>
-</head>
-<body>
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
 
-<header>👤 User List</header>
+  window.addEventListener("DOMContentLoaded", () => {
+    const userTable = document.getElementById("userTable");
 
-<div id="userContainer">
-  <!-- Firebase দিয়ে এখানে ইউজার লিস্ট লোড হবে -->
-</div>
+    // ফাংশন: UI আপডেট
+    function renderUsers(usersData) {
+      userTable.innerHTML = "";
+      Object.keys(usersData).forEach(uid => {
+        const user = usersData[uid];
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-gray-700";
+        tr.innerHTML = `
+          <td class="px-4 py-3">${user.name}</td>
+          <td class="px-4 py-3">${user.username}</td>
+          <td class="px-4 py-3">${user.email}</td>
+          <td class="px-4 py-3">
+            <input type="number" id="bal-${uid}" value="${user.balance || 0}" class="bg-gray-700 text-white w-24 px-2 py-1 rounded">
+          </td>
+          <td class="px-4 py-3 text-center space-x-2">
+            <button onclick="updateBalance('${uid}')" class="bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded">Update</button>
+            <button onclick="suspendUser('${uid}')" class="bg-red-500 hover:bg-red-600 px-3 py-1 rounded">Suspend 24h</button>
+          </td>
+        `;
+        userTable.appendChild(tr);
+      });
+    }
 
-<script>
-const firebaseConfig = {
-  apiKey: "AIzaSyBEbzvJ5asGNPp85_Uyvk1N_TCjIBfECXY",
-  authDomain: "studentbestincome.firebaseapp.com",
-  databaseURL: "https://studentbestincome-default-rtdb.firebaseio.com",
-  projectId: "studentbestincome",
-  storageBucket: "studentbestincome.appspot.com",
-  messagingSenderId: "261636758539",
-  appId: "1:261636758539:web:faea7afabe319a53117b0e",
-  measurementId: "G-6L77EJ7MJF"
-};
+    // Firebase থেকে রিয়েলটাইম ইউজার ডেটা
+    const usersRef = ref(db, 'users');
+    onValue(usersRef, snapshot => {
+      const data = snapshot.val();
+      if(data) renderUsers(data);
+    });
 
-firebase.initializeApp(firebaseConfig);
+    // ব্যালেন্স আপডেট
+    window.updateBalance = (uid) => {
+      const newBal = parseFloat(document.getElementById(`bal-${uid}`).value) || 0;
+      update(ref(db, `users/${uid}`), { balance: newBal })
+        .then(() => alert(`✅ ইউজার ${uid} এর ব্যালেন্স আপডেট হয়েছে: ${newBal}৳`))
+        .catch(err => alert("❌ ব্যালেন্স আপডেট করতে সমস্যা: "+err));
+    }
 
-// Admin Login
-const adminEmail = "admin@example.com";
-const adminPass = "Dark";
-
-firebase.auth().signInWithEmailAndPassword(adminEmail, adminPass)
-  .then(() => {
-    console.log("Admin logged in!");
-    loadUsers();
-  })
-  .catch(err => console.error("Login Error:", err.message));
-
-// Load Users
-function loadUsers() {
-  const dbRef = firebase.database().ref('users'); // Firebase Realtime Database এর path
-  dbRef.on('value', (snapshot) => {
-    const users = snapshot.val();
-    const container = document.getElementById('userContainer');
-    container.innerHTML = '';
-
-    for (let uid in users) {
-      const user = users[uid];
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.innerHTML = `
-        <div>
-          <p><strong>UserID:</strong> ${uid}</p>
-          <p><strong>Name:</strong> ${user.name || '-'}</p>
-          <p><strong>Balance:</strong> <input type="number" class="balance-input" value="${user.balance || 0}">৳</p>
-        </div>
-        <button class="btn btn-update" onclick="updateBalance('${uid}', this)">Update</button>
-      `;
-      container.appendChild(card);
+    // Suspend 24h
+    window.suspendUser = (uid) => {
+      const until = Date.now() + 24*60*60*1000; // 24h মিলে মিলিসেকেন্ড
+      update(ref(db, `users/${uid}`), { suspendedUntil: until })
+        .then(() => alert(`🚫 ইউজার ${uid} ২৪ ঘন্টার জন্য সাসপেন্ড করা হয়েছে`))
+        .catch(err => alert("❌ সাসপেন্ড করতে সমস্যা: "+err));
     }
   });
-}
-
-// Update Balance
-function updateBalance(uid, btn) {
-  const input = btn.previousElementSibling.querySelector('.balance-input');
-  const newBalance = parseInt(input.value) || 0;
-  firebase.database().ref('users/' + uid).update({ balance: newBalance })
-    .then(() => alert('Balance Updated!'))
-    .catch(err => alert('Error: ' + err.message));
-}
 </script>
 
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+<header class="bg-gray-800 py-4 shadow-md">
+  <h1 class="text-center text-2xl font-bold">👥 ইউজার লিস্ট (Manage Users)</h1>
+</header>
+
+<main class="p-6 overflow-x-auto">
+  <table class="min-w-full bg-gray-800 rounded-lg shadow-lg">
+    <thead>
+      <tr class="bg-gray-700 text-left text-sm uppercase">
+        <th class="px-4 py-3">নাম</th>
+        <th class="px-4 py-3">ইউজারনেম</th>
+        <th class="px-4 py-3">ইমেইল</th>
+        <th class="px-4 py-3">ব্যালেন্স (৳)</th>
+        <th class="px-4 py-3 text-center">অ্যাকশন</th>
+      </tr>
+    </thead>
+    <tbody id="userTable" class="divide-y divide-gray-700"></tbody>
+  </table>
+</main>
 </body>
 </html>
 
